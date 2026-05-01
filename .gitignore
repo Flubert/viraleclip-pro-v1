@@ -1,0 +1,9 @@
+﻿node_modules
+.next
+out
+dist
+.env*.local
+*.log
+temp/
+*.mp4
+cookies.txt
