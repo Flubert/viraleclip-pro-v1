@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import ytdl from '@distube/ytdl-core';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -13,16 +13,23 @@ export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
 
-    if (!url) {
-      return NextResponse.json({ success: false, error: 'URL manquante' }, { status: 400 });
+    if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
+      return NextResponse.json({ success: false, error: 'URL YouTube invalide' }, { status: 400 });
     }
 
     const tempDir = os.tmpdir();
     videoPath = path.join(tempDir, `video_${Date.now()}.mp4`);
 
-    // Téléchargement simple
-    const cmd = `yt-dlp --no-warnings --no-playlist --max-filesize 300M -o "${videoPath}" "${url}"`;
-    execSync(cmd, { stdio: 'inherit', timeout: 120000 });
+    // Téléchargement avec ytdl-core (fonctionne sur Vercel)
+    const stream = ytdl(url, { quality: '18' }); // 360p
+    const writeStream = fs.createWriteStream(videoPath);
+
+    await new Promise((resolve, reject) => {
+      stream.pipe(writeStream);
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+      stream.on('error', reject);
+    });
 
     if (!fs.existsSync(videoPath) || fs.statSync(videoPath).size < 50000) {
       throw new Error("Téléchargement échoué");
