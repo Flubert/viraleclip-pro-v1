@@ -13,41 +13,30 @@ export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
 
-    if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
-      return NextResponse.json({ success: false, error: 'URL YouTube invalide' }, { status: 400 });
+    if (!url) {
+      return NextResponse.json({ success: false, error: 'URL manquante' }, { status: 400 });
     }
 
     const tempDir = os.tmpdir();
     videoPath = path.join(tempDir, `video_${Date.now()}.mp4`);
 
-    const strategies = [
-      `yt-dlp --no-warnings --no-playlist --max-filesize 300M -o "${videoPath}" "${url}"`,
-    ];
+    // Téléchargement simple
+    const cmd = `yt-dlp --no-warnings --no-playlist --max-filesize 300M -o "${videoPath}" "${url}"`;
+    execSync(cmd, { stdio: 'inherit', timeout: 120000 });
 
-    let success = false;
-    for (const cmd of strategies) {
-      try {
-        execSync(cmd, { stdio: 'inherit', timeout: 120000 });
-        if (fs.existsSync(videoPath) && fs.statSync(videoPath).size > 50000) {
-          success = true;
-          break;
-        }
-      } catch {}
+    if (!fs.existsSync(videoPath) || fs.statSync(videoPath).size < 50000) {
+      throw new Error("Téléchargement échoué");
     }
 
-    if (!success) {
-      throw new Error("Impossible de télécharger la vidéo.");
-    }
-
+    // Gemini
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    const prompt = `Retourne UNIQUEMENT ce JSON :
+    const prompt = `Retourne ce JSON :
 {
-  "main_prompt": "prompt détaillé pour vidéo IA (200-400 mots)",
-  "suno_prompt": "prompt musical pour Suno",
-  "capcut_instructions": "instructions montage CapCut"
+  "main_prompt": "prompt détaillé pour IA vidéo (200-400 mots)",
+  "suno_prompt": "prompt Suno",
+  "capcut_instructions": "instructions CapCut"
 }
-Vidéo : ${url}`;
+Vidéo: ${url}`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
@@ -57,13 +46,13 @@ Vidéo : ${url}`;
       const match = text.match(/\{[\s\S]*\}/);
       analysis = match ? JSON.parse(match[0]) : {
         main_prompt: text,
-        suno_prompt: "Musique énergique moderne",
+        suno_prompt: "Musique moderne énergique",
         capcut_instructions: "Montage dynamique"
       };
     } catch {
       analysis = {
         main_prompt: text,
-        suno_prompt: "Musique énergique moderne",
+        suno_prompt: "Musique moderne énergique",
         capcut_instructions: "Montage dynamique"
       };
     }
