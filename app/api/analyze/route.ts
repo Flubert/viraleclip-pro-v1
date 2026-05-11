@@ -70,6 +70,8 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir, { recursive: true });
 }
 
+// test vercel).
+
     const fileName = `video_${Date.now()}.mp4`;
     videoPath = path.join(publicTempDir, fileName);
     const videoPublicUrl = `/temp/${fileName}`;
