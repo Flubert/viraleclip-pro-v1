@@ -1,274 +1,207 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 
-const generateSunoPrompt = (analysis: any): string => {
-  if (!analysis || typeof analysis !== 'object') {
-    return "High-energy track with powerful beats, catchy hooks, emotional melody, modern production, viral potential";
-  }
+export default function HomePage() {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [copiedField, setCopiedField] = useState('');
 
-  const style = analysis.style || "Hip-Hop / Dance";
-  const mood = analysis.mood || "energetic";
-  const theme = analysis.theme || "motivation";
-
-  return `[${style}] High-energy track with powerful beats, catchy hooks, ${mood} melody, ${theme} theme, modern production, viral potential`;
-};
-
-const generateCapCutPrompt = (analysis: any, sunoPrompt: string): string => {
-  if (!analysis) {
-    return `INSTRUCTIONS CAPCUT - MONTAGE AUTOMATIQUE
-
-1. Importer :
-- Vidéo générée par Kling/Sora/Veo 3
-- Musique générée par Suno : "${sunoPrompt}"
-
-2. Montage :
-- Synchroniser les cuts sur les beats
-- Transitions dynamiques (Zoom, Glitch, Flash) sur les temps forts
-- Texte style accrocheur avec paroles ou hooks
-- Étalonnage : contraste élevé, couleurs vives
-- Effets : slow-motion sur mouvements puissants, particules sur drops
-
-3. Export :
-- Format : 9:16
-- Qualité : 1080p ou 4K
-- Nom : Viral_Clip_[Date]`;
-  }
-
-  const style = analysis.style || "Hip-Hop / Dance";
-  const aspectRatio = analysis.aspect_ratio || "9:16";
-
-  return `INSTRUCTIONS CAPCUT - MONTAGE AUTOMATIQUE
-
-1. Importer :
-- Vidéo générée par Kling/Sora/Veo 3
-- Musique générée par Suno : "${sunoPrompt}"
-
-2. Montage :
-- Synchroniser les cuts sur les beats de la musique ${style}
-- Transitions dynamiques (Zoom, Glitch, Flash) sur les temps forts
-- Texte style accrocheur avec paroles ou hooks principaux
-- Étalonnage : contraste élevé, couleurs vives, vibe ${style}
-- Effets : slow-motion sur mouvements puissants, particules sur drops
-
-3. Export :
-- Format : ${aspectRatio}
-- Qualité : 1080p ou 4K
-- Nom : Viral_Clip_[Date]`;
-};
-
-const generateViralStrategy = (analysis: any): string => {
-  return "Publier sur TikTok + Instagram Reels avec hashtags viraux (#ViralMusic #Trending), poster entre 19h et 21h, utiliser une miniature accrocheuse avec gros texte.";
-};
-
-// ====================== COMPOSANT CRÉATEUR DE CLIPS (SANS LUCIDE) ======================
-const ClipCreator = ({ result }: { result: any }) => {
-  const [copied, setCopied] = useState(false);
-
-  const mainPrompt = result?.mainPrompt || result?.main_prompt || result?.prompt || JSON.stringify(result, null, 2);
-
-  const copyPrompt = async () => {
-    await navigator.clipboard.writeText(mainPrompt);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // Lancement de l'analyse
+  const handleAnalyze = async () => {
+    if (!url) return;
+    setLoading(true);
+    setData(null);
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setData(result);
+      } else {
+        alert("Erreur : " + result.error);
+      }
+    } catch (err) {
+      alert("Erreur de connexion au serveur.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const openGenerator = (url: string) => {
-    window.open(url, '_blank');
+  // Gestion du presse-papier
+  const copyToClipboard = (text: string, field: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(''), 2000);
   };
 
+  // Réinitialisation
+  const handleReset = () => {
+    setUrl('');
+    setData(null);
+  };
+
+  // Liens des générateurs vidéo
   const generators = [
-    { name: 'Kling AI', url: 'https://kling.ai', color: 'from-purple-500 to-pink-500' },
-    { name: 'Veo 3', url: 'https://gemini.google.com', color: 'from-blue-500 to-cyan-500' },
-    { name: 'Sora', url: 'https://chatgpt.com', color: 'from-green-500 to-emerald-500' },
-    { name: 'Runway Gen-3', url: 'https://runwayml.com', color: 'from-red-500 to-orange-500' },
-    { name: 'Luma Dream Machine', url: 'https://lumalabs.ai', color: 'from-indigo-500 to-purple-500' },
-    { name: 'Pika Labs', url: 'https://pika.art', color: 'from-yellow-500 to-amber-500' },
-    { name: 'Hailuo Minimax', url: 'https://hailuoai.com', color: 'from-teal-500 to-cyan-500' },
-    { name: 'CapCut', url: 'https://www.capcut.com', color: 'from-black to-gray-800', special: true },
-    { name: 'Midjourney', url: 'https://midjourney.com', color: 'from-violet-500 to-purple-600', image: true },
-    { name: 'Leonardo AI', url: 'https://leonardo.ai', color: 'from-rose-500 to-pink-500', image: true },
+    { name: 'Kling AI', color: 'bg-fuchsia-600', link: 'https://klingai.com' },
+    { name: 'Veo 3', color: 'bg-blue-500', link: 'https://deepmind.google/technologies/veo/' },
+    { name: 'Sora', color: 'bg-emerald-500', link: 'https://openai.com/sora' },
+    { name: 'Runway', color: 'bg-orange-500', link: 'https://runwayml.com' },
+    { name: 'Luma', color: 'bg-indigo-500', link: 'https://lumalabs.ai/dream-machine' },
+    { name: 'Pika', color: 'bg-amber-500', link: 'https://pika.art' },
+    { name: 'Hailuo', color: 'bg-cyan-600', link: 'https://hailuoai.com/video' },
+    { name: 'CapCut', color: 'bg-gray-800', link: 'https://www.capcut.com' },
   ];
 
   return (
-    <div className="mt-12 bg-zinc-900 border border-zinc-700 rounded-3xl p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <span className="text-4xl">✨</span>
-        <h2 className="text-3xl font-bold">Créer mes clips vidéos</h2>
-      </div>
+    <div className="min-h-screen bg-[#0b0f19] text-white font-sans pb-12">
+      {/* HEADER */}
+      <header className="text-center py-10 space-y-2">
+        <h1 className="text-4xl font-black tracking-wider">
+          ViraleClip <span className="text-cyan-400">Pro</span>
+        </h1>
+        <p className="text-gray-400 text-sm">
+          Colle un lien → Analyse avec Gemini → Prompt prêt
+        </p>
+      </header>
 
-      {/* Prompt principal */}
-      <div className="bg-zinc-950 border border-zinc-700 rounded-2xl p-6 mb-8">
-        <p className="text-zinc-400 text-sm mb-3">PROMPT VIDÉO IA (prêt à coller) :</p>
-        <pre className="bg-black text-emerald-300 p-5 rounded-xl text-sm max-h-64 overflow-auto whitespace-pre-wrap">
-          {mainPrompt}
-        </pre>
-        <button
-          onClick={copyPrompt}
-          className="mt-4 w-full bg-white text-black hover:bg-emerald-400 font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 text-lg transition-colors"
-        >
-          <span className="text-2xl">📋</span>
-          {copied ? '✅ Prompt copié !' : 'Copier le prompt principal'}
-        </button>
-      </div>
-
-      {/* Grille des générateurs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {generators.map((gen) => (
-          <div
-            key={gen.name}
-            className={`group p-5 rounded-3xl border border-zinc-700 hover:border-white/30 transition-all hover:scale-105 flex flex-col bg-gradient-to-br ${gen.color}`}
-          >
-            <div className="flex-1">
-              <div className="text-white font-bold text-xl mb-2">{gen.name}</div>
-              {gen.special && (
-                <span className="bg-yellow-400 text-black text-xs px-3 py-1 rounded-full font-medium">ÉDITEUR PRO</span>
-              )}
-              {gen.image && <span className="text-xs text-white/70">Images → Vidéo</span>}
-            </div>
-
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => {
-                  copyPrompt();
-                  setTimeout(() => openGenerator(gen.url), 700);
-                }}
-                className="flex-1 bg-white/10 hover:bg-white/20 text-white py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2"
-              >
-                <span className="text-xl">📋</span>
-                Copier + Ouvrir
-              </button>
-              <button
-                onClick={() => openGenerator(gen.url)}
-                className="px-5 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center text-2xl"
-              >
-                🔗
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <p className="text-center text-zinc-500 text-sm mt-8">
-        💡 Colle le prompt dans l’outil choisi → génère ta vidéo en quelques clics
-      </p>
-    </div>
-  );
-};
-
-// ====================== PAGE PRINCIPALE ======================
-export default function ViraleClipPro() {
-  const [url, setUrl] = useState('');
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState('');
-
-  const handleAnalyze = () => {
-    if (!url) {
-      setError('Veuillez entrer une URL');
-      return;
-    }
-    analyzeVideo(url, setResult, setError, setLoading, setProgress);
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-5xl font-bold mb-2 text-center">ViraleClip <span className="text-cyan-400">Pro</span></h1>
-        <p className="text-center text-gray-400 mb-10">Colle un lien → Analyse avec Gemini → Prompt prêt pour Kling / Sora / Veo 3</p>
-
-        <div className="flex gap-4 mb-8">
+      <main className="max-w-4xl mx-auto px-4 space-y-6">
+        {/* BARRE DE RECHERCHE */}
+        <div className="flex gap-2 bg-[#131b2e] p-2 rounded-xl border border-gray-800">
           <input
             type="text"
+            placeholder="https://www.youtube.com/shorts/..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://www.youtube.com/shorts/..."
-            className="flex-1 bg-gray-900 border border-gray-700 rounded-2xl px-6 py-5 focus:outline-none focus:border-cyan-500 text-lg"
+            className="flex-1 bg-transparent px-4 py-2 text-white outline-none text-sm"
           />
           <button
             onClick={handleAnalyze}
             disabled={loading}
-            className="bg-cyan-500 hover:bg-cyan-600 px-12 py-5 rounded-2xl font-semibold text-lg disabled:opacity-50 transition-colors"
+            className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold px-6 py-2 rounded-lg transition duration-200 text-sm disabled:opacity-50"
           >
-            {loading ? 'Analyse en cours...' : 'Analyser'}
+            {loading ? 'Analyse...' : 'Analyser'}
           </button>
         </div>
 
-        {error && <div className="bg-red-900/50 border border-red-500 text-red-200 p-5 rounded-2xl mb-8">{error}</div>}
+        {/* RÉSULTATS */}
+        {data && data.analysis && (
+          <div className="space-y-6 animate-fadeIn">
+            
+            {/* BOUTON TÉLÉCHARGEMENT */}
+            {data.videoUrl && (
+              <a
+                href={data.videoUrl}
+                download="video_originale.mp4"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-3 rounded-xl transition duration-200 shadow-lg shadow-emerald-500/10"
+              >
+                📥 Télécharger la vidéo originale
+              </a>
+            )}
 
-        {result && (
-          <div className="bg-gray-900 border border-gray-700 rounded-3xl p-8 space-y-10">
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">📹 Prompt Suno</h3>
-              <pre className="bg-black p-5 rounded-2xl text-sm overflow-auto">{result.sunoPrompt}</pre>
+            {/* BLOCS SUNO ET CAPCUT */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {/* SUNO */}
+              <div className="bg-[#131b2e] border border-gray-800 p-5 rounded-xl flex flex-col justify-between space-y-3">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-white flex items-center gap-2 text-sm">
+                    🎵 Prompt Suno
+                  </h3>
+                  <button
+                    onClick={() => copyToClipboard(data.analysis.suno_prompt, 'suno')}
+                    className="bg-[#1e293b] hover:bg-slate-700 text-gray-300 px-3 py-1 rounded-md text-xs transition"
+                  >
+                    {copiedField === 'suno' ? 'Copié !' : '📋 Copier'}
+                  </button>
+                </div>
+                <div className="bg-[#0b0f19] p-3 rounded-lg flex-1 border border-gray-900/50 max-h-40 overflow-y-auto text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {data.analysis.suno_prompt || "Non généré"}
+                </div>
+              </div>
+
+              {/* CAPCUT */}
+              <div className="bg-[#131b2e] border border-gray-800 p-5 rounded-xl flex flex-col justify-between space-y-3">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-white flex items-center gap-2 text-sm">
+                    ✂️ Instructions CapCut
+                  </h3>
+                  <button
+                    onClick={() => copyToClipboard(data.analysis.capcut_instructions, 'capcut')}
+                    className="bg-[#1e293b] hover:bg-slate-700 text-gray-300 px-3 py-1 rounded-md text-xs transition"
+                  >
+                    {copiedField === 'capcut' ? 'Copié !' : '📋 Copier'}
+                  </button>
+                </div>
+                <div className="bg-[#0b0f19] p-3 rounded-lg flex-1 border border-gray-900/50 max-h-40 overflow-y-auto text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {data.analysis.capcut_instructions || "Non généré"}
+                </div>
+              </div>
+
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">✂️ Instructions CapCut</h3>
-              <pre className="bg-black p-5 rounded-2xl text-sm overflow-auto">{result.capcutPrompt}</pre>
+            {/* SECTION CRÉATION CLIPS */}
+            <div className="bg-[#131b2e] border border-gray-800 p-6 rounded-xl space-y-4">
+              <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
+                ✨ Créer mes clips vidéos
+              </h2>
+              
+              <div className="space-y-2">
+                <label className="text-xs text-gray-400 font-semibold tracking-wider block">
+                  PROMPT VIDÉO PRINCIPAL
+                </label>
+                <div className="bg-[#0b0f19] p-4 rounded-lg border border-gray-900 text-xs text-gray-300 leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap">
+                  {data.analysis.main_prompt}
+                </div>
+                <button
+                  onClick={() => copyToClipboard(data.analysis.main_prompt, 'main')}
+                  className="w-full bg-white hover:bg-gray-200 text-black font-bold py-2.5 rounded-lg text-xs transition duration-200 flex items-center justify-center gap-2"
+                >
+                  {copiedField === 'main' ? 'Copié !' : '📋 Copier le prompt principal'}
+                </button>
+              </div>
+
+              {/* GRILLE GÉNÉRATEURS */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
+                {generators.map((gen) => (
+                  <div
+                    key={gen.name}
+                    className={`${gen.color} rounded-xl p-4 flex flex-col justify-between h-28 relative overflow-hidden group hover:opacity-95 transition`}
+                  >
+                    <span className="font-black text-white text-sm">{gen.name}</span>
+                    <button
+                      onClick={() => {
+                        copyToClipboard(data.analysis.main_prompt, gen.name);
+                        window.open(gen.link, '_blank');
+                      }}
+                      className="bg-black/30 hover:bg-black/50 text-white text-[10px] font-bold py-1.5 px-2 rounded backdrop-blur-sm transition flex items-center justify-center gap-1"
+                    >
+                      {copiedField === gen.name ? 'Copié !' : '📋 Copier + Ouvrir'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
             </div>
 
-            <div>
-              <h3 className="font-semibold mb-3">Stratégie Virale</h3>
-              <p className="bg-black p-5 rounded-2xl">{result.viralStrategy}</p>
-            </div>
+            {/* BOUTON NOUVELLE ANALYSE */}
+            <button
+              onClick={handleReset}
+              className="w-full bg-[#1e293b] hover:bg-slate-700 text-gray-300 font-bold py-3 rounded-xl transition duration-200 text-sm flex items-center justify-center gap-2 border border-gray-700"
+            >
+              🔄 Nouvelle Analyse
+            </button>
 
-            {/* Panneau Création de clips */}
-            <ClipCreator result={result} />
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
-
-const analyzeVideo = async (
-  url: string,
-  setResult: any,
-  setError: any,
-  setLoading: any,
-  setProgress: any
-) => {
-  setLoading(true);
-  setError(null);
-  setProgress('Analyse en cours...');
-
-  try {
-    const res = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
-
-    const data = await res.json();
-
-    if (!data.success) {
-      setError(data.error || 'Erreur lors de l\'analyse');
-      return;
-    }
-
-    const analysis = data.analysis || {};
-
-    const sunoPrompt = generateSunoPrompt(analysis);
-    const capcutPrompt = generateCapCutPrompt(analysis, sunoPrompt);
-    const viralStrategy = generateViralStrategy(analysis);
-
-    const completeResult = {
-      ...analysis,
-      sunoPrompt,
-      capcutPrompt,
-      viralStrategy,
-      mainPrompt: analysis.main_prompt || analysis.mainPrompt || "Prompt non disponible",
-    };
-
-    setResult(completeResult);
-    setError('');
-  } catch (err: any) {
-    console.error(err);
-    setError(err.message || 'Erreur de connexion. Vérifiez que le serveur tourne.');
-  } finally {
-    setLoading(false);
-    setProgress('');
-  }
-};

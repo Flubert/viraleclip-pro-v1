@@ -1,5 +1,7 @@
 {
-  "buildCommand": "next build",
-  "outputDirectory": ".next",
-  "framework": "nextjs"
+  "functions": {
+    "app/api/analyze/route.ts": {
+      "maxDuration": 60
+    }
+  }
 }
