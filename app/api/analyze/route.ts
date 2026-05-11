@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import os from 'os'; // 👈 AJOUTE CETTE LIGNE ICI
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -57,11 +58,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'URL YouTube ou TikTok requise' }, { status: 400 });
     }
 
-    const platform = isTikTok ? 'TikTok' : 'YouTube';
-    const publicTempDir = path.join(process.cwd(), 'public', 'temp');
-    if (!fs.existsSync(publicTempDir)) {
-      fs.mkdirSync(publicTempDir, { recursive: true });
-    }
+       const platform = isTikTok ? 'TikTok' : 'YouTube';
+    
+   const platform = isTikTok ? 'TikTok' : 'YouTube';
+
+// On utilise le dossier temporaire du système ('/tmp') qui est accessible en écriture sur Vercel
+const tempDir = path.join(process.cwd(), 'tmp');
+
+// On s'assure que le dossier existe avant de l'utiliser
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
 
     const fileName = `video_${Date.now()}.mp4`;
     videoPath = path.join(publicTempDir, fileName);
