@@ -57,13 +57,11 @@ export async function POST(request: NextRequest) {
     if (!isTikTok && !isYouTube) {
       return NextResponse.json({ success: false, error: 'URL YouTube ou TikTok requise' }, { status: 400 });
     }
-
-       const platform = isTikTok ? 'TikTok' : 'YouTube';
-    
-   const platform = isTikTok ? 'TikTok' : 'YouTube';
-
+const platform = isTikTok ? 'TikTok' : 'YouTube'; 
 // On utilise le dossier temporaire du système ('/tmp') qui est accessible en écriture sur Vercel
+const publicTempDir = path.join(process.cwd(), 'public', 'temp');
 const tempDir = path.join(process.cwd(), 'tmp');
+
 
 // On s'assure que le dossier existe avant de l'utiliser
 if (!fs.existsSync(tempDir)) {
