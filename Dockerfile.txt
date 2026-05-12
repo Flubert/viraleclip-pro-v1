@@ -1,0 +1,32 @@
+# 1. On part d'un serveur Linux avec Node.js préinstallé
+FROM node:18-bullseye
+
+# 2. On installe FFmpeg, Python (requis pour yt-dlp) et les outils de base
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    python3 \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 3. On télécharge et installe la dernière version officielle de yt-dlp pour Linux
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+    && chmod a+rx /usr/local/bin/yt-dlp
+
+# 4. On crée le dossier de travail pour l'application
+WORKDIR /app
+
+# 5. On copie les fichiers de configuration et on installe les dépendances Node.js
+COPY package*.json ./
+RUN npm install
+
+# 6. On copie tout le reste du code
+COPY . .
+
+# 7. On lance la compilation de Next.js
+RUN npm run build
+
+# 8. On expose le port standard et on démarre l'application
+EXPOSE 3000
+ENV PORT=3000
+CMD ["npm", "run", "start"]
