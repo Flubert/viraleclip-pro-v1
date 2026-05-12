@@ -70,9 +70,11 @@ export async function POST(request: NextRequest) {
 // test vercel).
 
     const fileName = `video_${Date.now()}.mp4`;
-    videoPath = path.join(publicTempDir, fileName);
+    
+    // ✅ ON UTILISE tempDir ICI AUSSI
+    videoPath = path.join(tempDir, fileName); 
+    
     const videoPublicUrl = `/temp/${fileName}`;
-
     const cookiesPath = path.join(process.cwd(), 'cookies.txt');
     const hasCookies = fs.existsSync(cookiesPath);
 
