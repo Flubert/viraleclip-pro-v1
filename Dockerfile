@@ -1,4 +1,4 @@
-# Image de base avec Node.js
+﻿# Image de base avec Node.js
 FROM node:20-slim
 
 # Installer Python, ffmpeg et yt-dlp
@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 
 # Installer yt-dlp directement (dernière version)
 RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp
+    && chmod a+x /usr/local/bin/yt-dlp
 
 # Définir le dossier de travail
 WORKDIR /app
